@@ -21,7 +21,7 @@ def get_data_from_consul():
             if data['Key'] in exclude_keys or data['Value'] is None:
                 print(f"Skip key: {data['Key']}")
                 continue
-            local_data[data['Key']] = base64.b64decode(data['Value']).decode("utf-8")
+            local_data[data['Key']] = base64.b64decode(data['Value'])
     else:
         print("Failed to get data from consul:" + response.text)
 
@@ -30,10 +30,7 @@ def get_data_from_consul():
 def sync_data_to_consul():
     headers = {"X-Consul-Auth": token, 'Content-Type': 'text/plain'}
     for key, value in local_data.items():
-        # response = requests.put(f"{to_consul_url}/v1/kv/{key}", headers=headers, data=value)
-        # 使用 files 参数传递数据
-        files = {"file": ("data.txt", value)}
-        response = requests.put(f"{to_consul_url}/v1/kv/{key}", headers=headers, data=value.encode('utf-8'))
+        response = requests.put(f"{to_consul_url}/v1/kv/{key}", headers=headers, data=value)
         if response.status_code != 200:
             print(f"Failed to sync data to consul for key: {key}")
         else:
