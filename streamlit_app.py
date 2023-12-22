@@ -41,7 +41,6 @@ add_slider = st.sidebar.slider(
     0.0, 100.0, (25.0, 75.0)
 )
 
-
 'Starting a long computation...'
 
 # Add a placeholder
