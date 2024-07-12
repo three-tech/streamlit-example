@@ -1,3 +1,5 @@
+import time
+
 import pandas as pd
 import streamlit as st
 from pandas import DataFrame
@@ -9,7 +11,11 @@ from service.plot.plot_line import plot_close_volume
 st.title("可转债分析")
 with st.sidebar:
     st.header("策略配置")
-    st.button("下载全量数据", on_click=dataKzz.download_data)
+    if st.button("下载全量数据"):
+        dataKzz.download_data_with_dialog()
+        st.balloons()
+        time.sleep(1.5)
+        st.rerun()
 
     st.markdown("### 均线策略参数配置")
     c1, c2, c3 = st.columns([1, 1, 1])
@@ -18,9 +24,9 @@ with st.sidebar:
     with c2:
         slow = st.number_input("慢线周期", value=10, key="ma_period2")
 
-st.header("可转债数据一览表")
+st.subheader("**可转债**实时可交易数据数据一览表")
 with st.spinner('读取数据中...'):
-    bond_zh_cov = dataKzz.read_data('bond_zh_cov')
+    bond_zh_cov = dataKzz.read_data_kzz('bond_zh_cov')
     st.dataframe(bond_zh_cov)
 
 st.markdown('---')
@@ -53,7 +59,7 @@ for name in names:
     symbol = row["symbol"].values[0]
     # 获取日频交易
     with st.spinner('下载数据中...'):
-        bond_zh_hs_cov_daily_df = dataKzz.read_data(f'his/{symbol}')
+        bond_zh_hs_cov_daily_df = dataKzz.read_data_kzz(f'his/{symbol}')
         tmp = bond_zh_hs_cov_daily_df[['date', 'close']]
         tmp[name] = tmp["close"]
         tmp = tmp.drop(columns=["close"])

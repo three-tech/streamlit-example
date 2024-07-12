@@ -5,7 +5,10 @@ import pandas as pd
 import streamlit as st
 from pandas import DataFrame
 
-data_path = 'data/kzz/'
+from util import file
+
+data_path_kzz = 'data/kzz/'
+last_download_date = None
 default_his_columns = ['date', 'code', 'symbol', 'name', 'open', 'high', 'low', 'close', 'volume', '收盘价', '纯债价值',
                        '转股价值', '纯债溢价率', '转股溢价率']
 
@@ -20,7 +23,7 @@ def bond_zh_cov() -> DataFrame:
     """
     result = ak.bond_zh_cov()
     result["symbol"] = result["债券代码"].apply(lambda x: 'sh' + x if x.startswith('11') else 'sz' + x)
-    result.to_csv(data_path + 'bond_zh_cov.csv')
+    result.to_csv(data_path_kzz + 'bond_zh_cov.csv')
     return __format__(result)
 
 
@@ -31,7 +34,7 @@ def bond_zh_hs_cov_spot() -> DataFrame:
     :return: 所有沪深可转债在当前时刻的实时行情数据
     """
     result = ak.bond_zh_hs_cov_spot()
-    result.to_csv(data_path + 'bond_zh_hs_cov_spot.csv')
+    result.to_csv(data_path_kzz + 'bond_zh_hs_cov_spot.csv')
     print('bond_zh_hs_cov_spot下载完成')
     return __format__(result)
 
@@ -70,8 +73,52 @@ def bond_zh_hs_cov_daily(symbol: str) -> DataFrame:
         return pd.DataFrame()
 
 
+@st.experimental_dialog("数据下载中...")
+def download_data_with_dialog():
+    """
+    下载数据
+    :return:
+    """
+
+    progress_bar = st.progress(0)
+    data = bond_zh_hs_cov_spot()
+    row_count = data.shape[0] - 1
+
+    for i, (index, row) in enumerate(data.iterrows(), 1):
+        progress = i / row_count
+        progress = 1 if progress >= 1 else progress
+
+        code = row['code']
+        symbol = row['symbol']
+        name = row['name']
+        text = f'开始下载{code}-{name}...'
+        print(text)
+
+        progress_bar.progress(progress, text=f'    {progress * 100:.2f}% {text}')
+        # 分析数据
+        analysis = bond_zh_cov_value_analysis(code)
+        # 历史数据
+        history = bond_zh_hs_cov_daily(symbol)
+        if history.empty:
+            print(f'{text}没有历史数据')
+            continue
+
+        merged = pd.merge(left=history, right=analysis, left_on='date', right_on='日期', how='left')
+        merged.to_csv(data_path_kzz + f'his/{symbol}.csv')
+        tmp = merged[[
+            'date', 'open', 'high', 'low', 'close', 'volume', '收盘价', '纯债价值', '转股价值', '纯债溢价率',
+            '转股溢价率']]
+        tmp.insert(1, 'code', code)
+        tmp.insert(2, 'symbol', symbol)
+        tmp.insert(3, 'name', name)
+        tmp.to_csv(data_path_kzz + f'his/{symbol}.csv')
+    # st.cache_resource.clear()
+    # st.cache_data.clear()
+    progress_bar.empty()
+    progress_bar.success('数据下载完成')
+
+
 def download_data():
-    st.toast('开始下载全量数据...')
     """
     下载数据
     :return:
@@ -93,15 +140,16 @@ def download_data():
             continue
 
         merged = pd.merge(left=history, right=analysis, left_on='date', right_on='日期', how='left')
-        merged.to_csv(data_path + f'his/{symbol}.csv')
+        merged.to_csv(data_path_kzz + f'his/{symbol}.csv')
         tmp = merged[[
             'date', 'open', 'high', 'low', 'close', 'volume', '收盘价', '纯债价值', '转股价值', '纯债溢价率',
             '转股溢价率']]
         tmp.insert(1, 'code', code)
         tmp.insert(2, 'symbol', symbol)
         tmp.insert(3, 'name', name)
-        tmp.to_csv(data_path + f'his/{symbol}.csv')
+        tmp.to_csv(data_path_kzz + f'his/{symbol}.csv')
     st.cache_resource.clear()
+    st.cache_data.clear()
     st.toast('全量数据下载完成')
 
 
@@ -111,7 +159,7 @@ def available_symbols():
     获取可用数据
     :return:
     """
-    return [name[:-4] for name in os.listdir(data_path + 'his') if name.endswith('.csv')]
+    return [name[:-4] for name in os.listdir(data_path_kzz + 'his') if name.endswith('.csv')]
 
 
 def download_data_by_day(date: str, columns=None) -> DataFrame:
@@ -119,25 +167,23 @@ def download_data_by_day(date: str, columns=None) -> DataFrame:
         columns = default_his_columns
     result = DataFrame(columns=columns)
     for symbol in available_symbols():
-        file = data_path + f'his/{symbol}.csv'
+        file = data_path_kzz + f'his/{symbol}.csv'
         tmp = pd.read_csv(file)[columns]
         tmp = tmp[tmp['date'] == date]
         result = pd.concat([result, tmp], ignore_index=True)
     return __format__(result)
 
 
-@st.cache_resource(show_spinner=False)
-def read_data(name: str) -> DataFrame:
+def read_data_kzz(name: str) -> DataFrame:
     """
     读取数据
     :return:
     """
-    data = pd.read_csv(data_path + f'{name}.csv')
-    if 'Unnamed:0' in data.columns:
-        data.drop(columns=['Unnamed:0'], inplace=True)
-    if 'date' in data.columns:
-        data['date'] = pd.to_datetime(data['date'])
-    return pd.read_csv(data_path + f'{name}.csv')
+    return file.read_data(build_data_path(name))
+
+
+def build_data_path(name: str) -> str:
+    return data_path_kzz + f'{name}.csv'
 
 
 def __format__(data: DataFrame) -> DataFrame:

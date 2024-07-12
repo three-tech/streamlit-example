@@ -1,0 +1,10 @@
+   /* custom_theme.css */
+   .report-view-container .main footer::before {
+       content: "© 2023-2024 Your Company Name. All rights reserved.";
+       display: block;
+       position: relative;
+       top: 2rem;
+       color: grey;
+       text-align: center;
+       font-size: 0.8em;
+   }
