@@ -5,11 +5,20 @@ import pages.style as sd
 welcome = st.Page("pages/0 welcome.py", title="声明", icon="🍸")
 loginPage = st.Page("pages/login.py", title="登录", icon=":material/login:")
 kzzPage = st.Page("pages/1 kezhuanzai.py", title="可转债", icon="🔥")
-stockPage = st.Page("pages/2 stock.py", title="股票", icon="⬆")
+stockPage = st.Page("pages/2 stock.py", title="股票", icon="🏂")
+testPage = st.Page("pages/example/tab_test.py", title="新技术试验场", icon="🏂")
 
-st.set_page_config(page_title="量化分析", page_icon="📈", layout="wide", initial_sidebar_state="auto", )
+st.set_page_config(page_title="量化分析", page_icon="📈", layout="wide", initial_sidebar_state="expanded",
+                   menu_items=
+                   {
+                       'Get Help': 'https://www.extremelycoolapp.com/help',
+                       'Report a bug': "https://www.extremelycoolapp.com/bug",
+                       'About': "# This is a header. This is an *extremely* cool app!"
+                   }
+                   )
+# footer style
 st.markdown(sd.footer_style, unsafe_allow_html=True)
-st.markdown(sd.hide_streamlit_style, unsafe_allow_html=True)
+# st.markdown(sd.hide_streamlit_style, unsafe_allow_html=True)
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -29,8 +38,10 @@ if st.session_state.logged_in:
             "声明": [welcome],
             "工具": [kzzPage, stockPage],
             "账户": [logout_page],
+            "实验": [testPage]
         }
     )
+
 else:
     pg = st.navigation([loginPage])
 

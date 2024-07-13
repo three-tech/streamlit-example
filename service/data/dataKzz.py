@@ -112,8 +112,7 @@ def download_data_with_dialog():
         tmp.insert(2, 'symbol', symbol)
         tmp.insert(3, 'name', name)
         tmp.to_csv(data_path_kzz + f'his/{symbol}.csv')
-    # st.cache_resource.clear()
-    # st.cache_data.clear()
+    st.cache_resource.clear()
     progress_bar.empty()
     progress_bar.success('数据下载完成')
 

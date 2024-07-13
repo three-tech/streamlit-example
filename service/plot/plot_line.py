@@ -9,8 +9,8 @@ def plot_close_volume(data: DataFrame):
     df_melted = data.melt(id_vars=['date'],
                           var_name='stock',
                           value_name='收盘价')
-    df_melted['date'] = pd.to_datetime(df_melted['date'])
-    fig = px.line(df_melted, x='date', y='收盘价', color='stock', title='收盘价走势')
+    df_melted['日期'] = pd.to_datetime(df_melted['date'])
+    fig = px.line(df_melted, x='日期', y='收盘价', color='stock', title='收盘价走势')
     # 设置x轴日期格式
     fig.update_xaxes(tickformat='%Y-%m-%d')
     fig.update_layout(hovermode="x unified")

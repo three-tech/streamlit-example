@@ -12,11 +12,14 @@ footer_style = """
         }
         </style>
         <div class="footer">
-        © 2023-2024 山晖木盛网络科技有限公司. All rights reserved.
+        © 2023-2024 Three@Tech. All rights reserved.
         </div>
         """
 hide_streamlit_style = """
         <style>
+        .stDeployButton {
+            visibility: hidden;
+        }
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         </style>

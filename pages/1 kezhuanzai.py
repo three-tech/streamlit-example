@@ -5,7 +5,7 @@ import streamlit as st
 from pandas import DataFrame
 
 import service.data.dataKzz as dataKzz
-from service.plot.multi_sub import plot_mutuality_sub
+from pages.config.page_column_config import column_configuration
 from service.plot.plot_line import plot_close_volume
 
 st.title("可转债分析")
@@ -50,29 +50,33 @@ symbols = dataKzz.available_symbols()
 available_symbols = bond_zh_cov[bond_zh_cov["symbol"].isin(symbols)]
 
 names = st.multiselect("选择要分析的可转债", available_symbols["债券简称"], placeholder="可以多选")
-tmp = available_symbols[available_symbols["债券简称"].isin(names)]
-st.dataframe(tmp)
+selected = available_symbols[available_symbols["债券简称"].isin(names)]
+selected = selected[['债券简称', 'symbol', '转股溢价率', '信用评级']]
+selected['close'] = None
+selected.set_index("symbol", inplace=True)
+if not selected.empty:
+    close = DataFrame(columns=["date"])
+    for index, row in selected.iterrows():
+        symbol = index
+        name = row["债券简称"]
+        # 获取日频交易
+        with st.spinner('下载数据中...'):
+            bond_zh_hs_cov_daily_df = dataKzz.read_data_kzz(f'his/{symbol}')
+            close_str = '[' + ', '.join(str(x) for x in bond_zh_hs_cov_daily_df['close']) + ']'
+            selected.loc[index, 'close'] = close_str
+            tmp = bond_zh_hs_cov_daily_df[['date', 'close']]
+            tmp[name] = tmp["close"]
+            tmp = tmp.drop(columns=["close"])
+            close = pd.merge(left=close, right=tmp, left_on='date', right_on='date',
+                             how='outer')
 
-close = DataFrame(columns=["date"])
-for name in names:
-    row = available_symbols[available_symbols["债券简称"] == name]
-    symbol = row["symbol"].values[0]
-    # 获取日频交易
-    with st.spinner('下载数据中...'):
-        bond_zh_hs_cov_daily_df = dataKzz.read_data_kzz(f'his/{symbol}')
-        tmp = bond_zh_hs_cov_daily_df[['date', 'close']]
-        tmp[name] = tmp["close"]
-        tmp = tmp.drop(columns=["close"])
-        close = pd.merge(left=close, right=tmp, left_on='date', right_on='date',
-                         how='outer')
-
-        with st.expander(f"{name}日频交易数据"):
-            st.dataframe(bond_zh_hs_cov_daily_df)
-        st.plotly_chart(plot_mutuality_sub(bond_zh_hs_cov_daily_df))
-        # st.plotly_chart(plot_cand_volume(bond_zh_hs_cov_daily_df), use_container_width=True)
-# 画出收盘趋势
-if len(names) > 0:
+    st.dataframe(selected, column_config=column_configuration, use_container_width=True)
+    # 画出收盘趋势
     st.plotly_chart(plot_close_volume(close))
+
+# 画出收盘趋势
+# if len(names) > 0:
+#     st.plotly_chart(plot_close_volume(close))
 # row = bond_zh_cov[bond_zh_cov["债券代码"] == name]
 # symbol = row["symbol"].values[0]
 # # 获取日频交易

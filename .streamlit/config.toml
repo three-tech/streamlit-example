@@ -2,11 +2,23 @@
 port = 8888
 [theme]
 base = "light"
-primaryColor ="#F39C12"
+primaryColor = "#F39C12"
 backgroundColor = "#F9F9F9"
 secondaryBackgroundColor = "#F0F2F6"
 textColor = "#262730"
 font = "sans serif"
 
-[theme.customCSS]
-main = "css/custom_theme.css"
+[client]
+# Change the visibility of items in the toolbar, options menu,
+# and settings dialog (top right of the app).
+# Allowed values:
+# * "auto"      : Show the developer options if the app is accessed through
+#                 localhost or through Streamlit Community Cloud as a developer.
+#                 Hide them otherwise.
+# * "developer" : Show the developer options.
+# * "viewer"    : Hide the developer options.
+# * "minimal"   : Show only options set externally (e.g. through
+#                 Streamlit Community Cloud) or through st.set_page_config.
+#                 If there are no options left, hide the menu.
+# Default: "auto"
+toolbarMode = "minimal"
